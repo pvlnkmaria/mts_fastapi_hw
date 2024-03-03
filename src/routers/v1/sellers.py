@@ -8,7 +8,7 @@ from sqlalchemy.orm import selectinload
 
 from src.configurations.database import get_async_session
 from src.models.sellers import Seller
-from src.schemas import IncomingSeller, ReturnedAllSellers, ReturnedSeller, ReturnedSellerBooks
+from src.schemas import BaseSeller, IncomingSeller, ReturnedAllSellers, ReturnedSeller, ReturnedSellerBooks
 
 sellers_router = APIRouter(tags=["sellers"], prefix="/sellers")
 
@@ -62,16 +62,19 @@ async def delete_seller(seller_id: int, session: DBSession):
     return Response(status_code=status.HTTP_204_NO_CONTENT)  
 
 
-# Ручка для обновления данных о книге
-@sellers_router.put("/{seller_id}")
-async def update_seller(seller_id: int, new_data: ReturnedSeller, session: DBSession):
+# Ручка для обновления данных о продавце
+@sellers_router.put("/{seller_id}", response_model=ReturnedSeller)
+async def update_seller(seller_id: int, new_data: BaseSeller, session: DBSession):
     if updated_seller := await session.get(Seller, seller_id):
         updated_seller.first_name = new_data.first_name
         updated_seller.last_name = new_data.last_name
         updated_seller.email = new_data.email
 
         await session.flush()
+        
+        # Создайте новый экземпляр Pydantic схемы, используя обновленный объект
+        returnable_seller = ReturnedSeller.from_orm(updated_seller)
 
-        return updated_seller
+        return returnable_seller  # Возвращаем объект Pydantic вместо SQLAlchemy модели
 
     return Response(status_code=status.HTTP_404_NOT_FOUND)

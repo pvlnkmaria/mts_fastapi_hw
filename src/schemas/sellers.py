@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from .books import ReturnedBook
 
 __all__ = [
+    "BaseSeller",
     "IncomingSeller",
     "ReturnedSeller",
     "ReturnedAllSellers",
@@ -25,6 +26,9 @@ class IncomingSeller(BaseSeller):
 
 class ReturnedSeller(BaseSeller):
     id: int
+
+    class Config:
+        orm_mode = True
 
 
 class ReturnedSellerBooks(BaseSeller):
