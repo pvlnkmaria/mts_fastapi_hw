@@ -16,21 +16,20 @@ DBSession = Annotated[AsyncSession, Depends(get_async_session)]
 
 
 # Ручка для создания записи о книге в БД. Возвращает созданную книгу.
-@books_router.post("/", response_model=ReturnedBook, status_code=status.HTTP_201_CREATED)  # Прописываем модель ответа
-async def create_book(
-    book: IncomingBook, session: DBSession
-):  # прописываем модель валидирующую входные данные и сессию как зависимость.
-    # это - бизнес логика. Обрабатываем данные, сохраняем, преобразуем и т.д.
+@books_router.post("/", response_model=ReturnedBook, status_code=status.HTTP_201_CREATED)
+async def create_book(book: IncomingBook, session: DBSession):
     new_book = Book(
         title=book.title,
         author=book.author,
         year=book.year,
         count_pages=book.count_pages,
+        seller_id=book.seller_id,
     )
     session.add(new_book)
     await session.flush()
 
     return new_book
+
 
 
 # Ручка, возвращающая все книги
