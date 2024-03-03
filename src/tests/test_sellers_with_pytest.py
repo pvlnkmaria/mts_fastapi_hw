@@ -22,7 +22,7 @@ async def test_seller_creation(async_client):
 
 # Тест на ручку списка продавцов (его получения)
 @pytest.mark.asyncio
-async def test_retrieve_all_sellers(database_session, async_client):
+async def test_retrieve_all_sellers(db_session, async_client):
     manual_seller1 = sellers.Seller(
         first_name="Petr", last_name="Ivanov", email="pivanov@example.com", password="secret"
     )
@@ -30,8 +30,8 @@ async def test_retrieve_all_sellers(database_session, async_client):
         first_name="Ivan", last_name="Ivanov", email="iivanov@example.com", password="supersecret"
     )
 
-    database_session.add_all([manual_seller1, manual_seller2])
-    await database_session.flush()
+    db_session.add_all([manual_seller1, manual_seller2])
+    await db_session.flush()
 
     resp = await async_client.get("/api/v1/sellers/")
 
@@ -58,17 +58,17 @@ async def test_retrieve_all_sellers(database_session, async_client):
 
 # Тест на ручку получения одного продавца
 @pytest.mark.asyncio
-async def test_retrieve_specific_seller(database_session, async_client):
+async def test_retrieve_specific_seller(db_session, async_client):
     manual_seller = sellers.Seller(
         first_name="Ivan", last_name="Ivanov", email="iivanov@example.com", password="secret")
 
-    database_session.add(manual_seller)
-    await database_session.flush()
+    db_session.add(manual_seller)
+    await db_session.flush()
 
     manual_book = books.Book(title="Woe from Mind", author="Alexander Griboyedov", year=1825, count_pages=320, seller_id=manual_seller.id)
 
-    database_session.add(manual_book)
-    await database_session.flush()
+    db_session.add(manual_book)
+    await db_session.flush()
 
     resp = await async_client.get(f"/api/v1/sellers/{manual_seller.id}")
 
@@ -84,40 +84,41 @@ async def test_retrieve_specific_seller(database_session, async_client):
                 "title": "Woe from Mind",
                 "author": "Alexander Griboyedov",
                 "year": 1825,
-                "count_pages": 320,
                 "id": manual_book.id,
-                "seller_id": manual_seller.id
+                "count_pages": 320,
             }
         ]
     }
 
 # Тест на ручку для удаления продавца
 @pytest.mark.asyncio
-async def test_remove_seller(database_session, async_client):
+async def test_remove_seller(db_session, async_client):
     manual_seller = sellers.Seller(
         first_name="Ivan", last_name="Ivanov", email="iivanov@example.com", password="secret"
     )
 
-    database_session.add(manual_seller)
-    await database_session.flush()
+    db_session.add(manual_seller)
+    await db_session.flush()
 
     resp = await async_client.delete(f"/api/v1/sellers/{manual_seller.id}")
 
     assert resp.status_code == status.HTTP_204_NO_CONTENT
+    await db_session.flush()
+
 
     # Проверка, что продавец удален
-    all_sellers = await database_session.execute(select(sellers.Seller))
+    all_sellers = await db_session.execute(select(sellers.Seller))
     all_sellers_list = all_sellers.scalars().all()
     assert len(all_sellers_list) == 0
 
 # Тест на ручку обновления данных о продавце
 @pytest.mark.asyncio
-async def test_modify_seller(database_session, async_client):
+async def test_modify_seller(db_session, async_client):
     manual_seller = sellers.Seller(
         first_name="Ivan", last_name="Ivanov", email="iivanov@example.com", password="secret")
 
-    database_session.add(manual_seller)
-    await database_session.flush()
+    db_session.add(manual_seller)
+    await db_session.flush()
 
     resp = await async_client.put(
         f"/api/v1/sellers/{manual_seller.id}",
@@ -125,7 +126,7 @@ async def test_modify_seller(database_session, async_client):
 
     assert resp.status_code == status.HTTP_200_OK
 
-    updated_seller = await database_session.get(sellers.Seller, manual_seller.id)
+    updated_seller = await db_session.get(sellers.Seller, manual_seller.id)
     assert updated_seller.first_name == "Nikolay"
     assert updated_seller.last_name == "Nikolaev"
     assert updated_seller.email == "nnikolaev@example.com"

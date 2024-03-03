@@ -29,6 +29,7 @@ class ReturnedSeller(BaseSeller):
 
     class Config:
         orm_mode = True
+        allow_population_by_field_name = True
 
 
 class ReturnedSellerBooks(BaseSeller):
